@@ -1,5 +1,13 @@
-import Image from "next/image";
 import localFont from "next/font/local";
+import Image from "next/image";
+import { FC, useEffect, useState } from "react";
+import LoadingSpinner from "../../components/LoadingSpinner";
+
+interface Company {
+  id: number;
+  name: string;
+  address: string;
+}
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -12,104 +20,129 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-export default function Home() {
-  return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+const Home: FC = () => {
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const perPage: number = 6;
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPage, setTotalPage] = useState<number | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  console.log(companies, loading, error);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        setLoading(true); // Start loading on each request
+        const response = await fetch(
+          `http://localhost:3000/api/companies?page=${currentPage}&limit=${perPage}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch companies");
+        }
+        const data = await response.json();
+        setCompanies(data.data);
+        setTotalPage(data.meta.totalPages);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanies();
+  }, [currentPage, perPage]);
+
+  const handleNextPage = () => {
+    if (currentPage < (totalPage ?? 1)) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  return (
+    <div className="sm:p-20">
+      <div
+        className={`${geistSans.variable} ${geistMono.variable} grid md:grid-cols-3 gap-4 sm:grid-cols-1 items-center justify-items-center min-h-screen py-4 px-8 pb-20 gap-16 sm:p-10 font-[family-name:var(--font-geist-sans)]`}
+      >
+        {companies?.map((item) => (
+          <div
+            className="max-w-sm rounded overflow-hidden shadow-lg bg-white"
+            key={item.id}
           >
             <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              className="w-full"
+              src="https://via.placeholder.com/400x200"
+              alt="Placeholder Image"
+              width={100}
+              height={100}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+            <div className="px-6 py-4">
+              <div className="font-bold text-xl mb-2 text-black">
+                {item.name}
+              </div>
+              <div className="font-bold text-lg mb-2 text-black">
+                {item.address}
+              </div>
+              <p className="text-gray-700 text-base">
+                This is a brief description of the company. It provides useful
+                information about the company&apos;s mission, goals, and
+                services.
+              </p>
+            </div>
+            <div className="px-6 pt-4 pb-2">
+              <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center items-center space-x-4 mt-6">
+        {/* Previous Button */}
+        <button
+          onClick={handlePrevPage}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 bg-gray-300 text-gray-700 font-bold rounded-lg transition duration-300 
+          ${
+            currentPage === 1
+              ? "cursor-not-allowed opacity-50"
+              : "hover:bg-gray-400"
+          }`}
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Previous
+        </button>
+
+        {/* Page Indicator */}
+        <span className="text-gray-700 font-bold">
+          Page {currentPage} of {totalPage}
+        </span>
+
+        {/* Next Button */}
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPage}
+          className={`px-4 py-2 bg-blue-500 text-white font-bold rounded-lg transition duration-300
+          ${
+            currentPage === totalPage
+              ? "cursor-not-allowed opacity-50"
+              : "hover:bg-blue-600"
+          }`}
         >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          Next
+        </button>
+      </div>
     </div>
   );
-}
+};
+
+export default Home;
