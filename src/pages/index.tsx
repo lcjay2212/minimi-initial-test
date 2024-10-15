@@ -1,6 +1,7 @@
 import localFont from "next/font/local";
+import Image from "next/image";
 import { FC, useEffect, useState } from "react";
-import { Card, LoadingSpinner } from "../../components";
+import { LoadingSpinner } from "../../components";
 import { CreateCompanyForm } from "../../components/CreateCompanyForm";
 
 interface Company {
@@ -131,13 +132,39 @@ const Home: FC = () => {
         className={`${geistSans.variable} ${geistMono.variable} grid md:grid-cols-3 gap-4 sm:grid-cols-1 items-center justify-items-center  py-4 px-8 pb-20 gap-16 sm:p-10 font-[family-name:var(--font-geist-sans)]`}
       >
         {companies?.map((item) => (
-          <Card
-            id={item.id}
-            name={item.name}
-            address={item.address}
+          <div
+            className="max-w-sm rounded overflow-hidden shadow-lg bg-white"
             key={item.id}
-            onDelete={handleDelete}
-          />
+          >
+            <Image
+              className="w-full"
+              src="https://via.placeholder.com/400x200"
+              alt="Placeholder Image"
+              width={100}
+              height={100}
+            />
+            <div className="px-6 py-4">
+              <div className="font-bold text-xl mb-2 text-black">
+                {item.name}
+              </div>
+              <div className="font-bold text-lg mb-2 text-black">
+                {item.address}
+              </div>
+              <p className="text-gray-700 text-base">
+                This is a brief description of the company. It provides useful
+                information about the company&apos;s mission, goals, and
+                services.
+              </p>
+            </div>
+            <div className="px-6 pt-4 pb-2">
+              <button
+                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                onClick={() => handleDelete(item.id)}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ))}
       </div>
       <div className="flex justify-center items-center space-x-4 mt-6">
