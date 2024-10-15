@@ -1,7 +1,8 @@
 import localFont from "next/font/local";
 import Image from "next/image";
 import { FC, useEffect, useState } from "react";
-import LoadingSpinner from "../../components/LoadingSpinner";
+import { LoadingSpinner } from "../../components";
+import { CreateCompanyForm } from "../../components/CreateCompanyForm";
 
 interface Company {
   id: number;
@@ -23,17 +24,14 @@ const geistMono = localFont({
 const Home: FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const perPage: number = 6;
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPage, setTotalPage] = useState<number | null>(null);
 
-  console.log(companies, loading, error);
-
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        setLoading(true); // Start loading on each request
+        setLoading(true);
         const response = await fetch(
           `http://localhost:3000/api/companies?page=${currentPage}&limit=${perPage}`
         );
@@ -44,7 +42,7 @@ const Home: FC = () => {
         setCompanies(data.data);
         setTotalPage(data.meta.totalPages);
       } catch (err) {
-        setError((err as Error).message);
+        console.error((err as Error).message);
       } finally {
         setLoading(false);
       }
@@ -52,6 +50,64 @@ const Home: FC = () => {
 
     fetchCompanies();
   }, [currentPage, perPage]);
+
+  const handleDelete = async (id: number) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this company?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/companies/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete company");
+      }
+
+      setCompanies((prevCompanies) =>
+        prevCompanies.filter((company) => company.id !== id)
+      );
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.error("An unknown error occurred");
+      }
+    }
+  };
+
+  const handleCreate = async (newCompany: {
+    name: string;
+    address: string;
+  }) => {
+    try {
+      const response = await fetch("http://localhost:3000/api/companies", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newCompany),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create company");
+      }
+
+      const createdCompany = await response.json();
+      setCompanies((prevCompanies) => [...prevCompanies, createdCompany]);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.error("An unknown error occurred");
+      }
+    }
+  };
 
   const handleNextPage = () => {
     if (currentPage < (totalPage ?? 1)) {
@@ -71,8 +127,9 @@ const Home: FC = () => {
 
   return (
     <div className="sm:p-20">
+      <CreateCompanyForm onCreate={handleCreate} />
       <div
-        className={`${geistSans.variable} ${geistMono.variable} grid md:grid-cols-3 gap-4 sm:grid-cols-1 items-center justify-items-center min-h-screen py-4 px-8 pb-20 gap-16 sm:p-10 font-[family-name:var(--font-geist-sans)]`}
+        className={`${geistSans.variable} ${geistMono.variable} grid md:grid-cols-3 gap-4 sm:grid-cols-1 items-center justify-items-center  py-4 px-8 pb-20 gap-16 sm:p-10 font-[family-name:var(--font-geist-sans)]`}
       >
         {companies?.map((item) => (
           <div
@@ -100,7 +157,10 @@ const Home: FC = () => {
               </p>
             </div>
             <div className="px-6 pt-4 pb-2">
-              <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+              <button
+                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                onClick={() => handleDelete(item.id)}
+              >
                 Delete
               </button>
             </div>

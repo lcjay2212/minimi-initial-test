@@ -1,6 +1,6 @@
 import { FC } from "react";
 
-const LoadingSpinner: FC = () => (
+export const LoadingSpinner: FC = () => (
   <div className="flex justify-center items-center min-h-screen">
     <div className="loader"></div>
     <style jsx>{`
@@ -24,5 +24,3 @@ const LoadingSpinner: FC = () => (
     `}</style>
   </div>
 );
-
-export default LoadingSpinner;

@@ -56,16 +56,31 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       break;
     }
     // POST: Create a new company
-    case "POST":
-      const { name, address } = req.body as { name: string; address: string };
+    case "POST": {
+      // Handle POST requests for creating a new company
+      const { name, address } = req.body;
+
+      // Basic validation
       if (!name || !address) {
-        res.status(400).json({ error: "Name and Address are required" });
-        return;
+        return res
+          .status(400)
+          .json({ success: false, message: "Name and address are required." });
       }
-      const newCompany: Company = { id: companies.length + 1, name, address };
+
+      // Create a new company object
+      const newCompany: Company = {
+        id: companies.length + 1, // Assign a new ID based on the current length
+        name,
+        address,
+      };
+
+      // Add the new company to the array
       companies.push(newCompany);
-      res.status(201).json(newCompany);
+
+      // Respond with the created company
+      res.status(201).json({ success: true, company: newCompany });
       break;
+    }
 
     // PUT: Update an existing company
     case "PUT":
